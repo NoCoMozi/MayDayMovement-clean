@@ -19,9 +19,6 @@ jobs:
         with:
           python-version: '3.x'
           
-      - name: Install BeautifulSoup
-        run: pip install beautifulsoup4
-          
       - name: Add Update
         run: |
           # Create updates directory if it doesn't exist
@@ -34,68 +31,83 @@ jobs:
           # Update index.html with the new content
           python - <<EOF
           import os
+          import glob
           from datetime import datetime
-          import re
-          from bs4 import BeautifulSoup
           
-          def rebuild_updates_section():
+          def get_latest_updates():
+              # Get all update files sorted by timestamp (newest first)
+              update_files = sorted(glob.glob('updates/*.txt'), reverse=True)
+              
+              # Get content and dates for the 3 most recent updates
+              updates = []
+              for file in update_files[:3]:
+                  with open(file, 'r', encoding='utf-8') as f:
+                      content = f.read().strip()
+                  # Get date from filename (YYYYmmdd_HHMMSS)
+                  timestamp = os.path.basename(file).replace('.txt', '')
+                  date = datetime.strptime(timestamp, '%Y%m%d_%H%M%S')
+                  date_str = date.strftime('%Y-%m-%d %H:%M')
+                  updates.append({
+                      'content': content,
+                      'date': date_str
+                  })
+              return updates
+          
+          def create_updates_section():
+              updates = get_latest_updates()
+              
+              # Create the updates section HTML
+              updates_html = '''
+    <section id="updates" class="bg-light py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Latest Updates</h2>
+            <div class="updates-list">'''
+              
+              # Add each update
+              for update in updates:
+                  updates_html += f'''
+                <div class="update-item mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <p class="card-text">{update['content']}</p>
+                            <p class="card-text"><small class="text-muted">Posted on {update['date']}</small></p>
+                        </div>
+                    </div>
+                </div>'''
+              
+              updates_html += '''
+            </div>
+        </div>
+    </section>'''
+              
+              return updates_html
+          
+          def update_index_html():
+              # Read the current index.html
               with open('index.html', 'r', encoding='utf-8') as f:
                   content = f.read()
               
-              # Parse HTML
-              soup = BeautifulSoup(content, 'html.parser')
-              
-              # Find the updates section
-              updates_section = soup.find('section', id='updates')
-              if not updates_section:
+              # Find the updates section boundaries
+              start = content.find('<section id="updates"')
+              if start == -1:
                   print("Could not find updates section")
                   return
               
-              # Find all update items
-              updates_list = updates_section.find('div', class_='updates-list')
-              if not updates_list:
-                  print("Could not find updates list")
-                  return
-                  
-              # Create new update
-              new_update = soup.new_tag('div', attrs={'class': 'update-item mb-4'})
-              card = soup.new_tag('div', attrs={'class': 'card'})
-              card_body = soup.new_tag('div', attrs={'class': 'card-body'})
+              end = content.find('</section>', start) + len('</section>')
               
-              # Add content
-              content_p = soup.new_tag('p', attrs={'class': 'card-text'})
-              content_p.string = "${{ github.event.client_payload.content }}"
+              # Create the new updates section
+              new_updates = create_updates_section()
               
-              date_p = soup.new_tag('p', attrs={'class': 'card-text'})
-              date_small = soup.new_tag('small', attrs={'class': 'text-muted'})
-              date_small.string = f"Posted on ${{ github.event.client_payload.date }}"
-              date_p.append(date_small)
-              
-              card_body.append(content_p)
-              card_body.append(date_p)
-              card.append(card_body)
-              new_update.append(card)
-              
-              # Get all existing updates
-              existing_updates = updates_list.find_all('div', class_='update-item')
-              
-              # Clear the updates list
-              updates_list.clear()
-              
-              # Add new update first
-              updates_list.append(new_update)
-              
-              # Add next 2 most recent updates
-              for update in existing_updates[:2]:
-                  updates_list.append(update)
+              # Replace the old section with the new one
+              new_content = content[:start] + new_updates + content[end:]
               
               # Write the updated content back to the file
               with open('index.html', 'w', encoding='utf-8') as f:
-                  f.write(str(soup.prettify()))
+                  f.write(new_content)
               
-              print("Successfully rebuilt updates section")
+              print("Successfully updated index.html")
           
-          rebuild_updates_section()
+          update_index_html()
           EOF
           
       - name: Commit and push changes

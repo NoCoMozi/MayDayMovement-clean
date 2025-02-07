@@ -45,34 +45,74 @@ def handle_message(update: Update, context: CallbackContext) -> None:
         
         logger.info("Sending request to GitHub API...")
         
-        # Trigger the workflow via GitHub API
+        # Trigger the workflow via GitHub API with retries
         headers = {
             'Authorization': f'token {os.getenv("GITHUB_TOKEN")}',
             'Accept': 'application/vnd.github.v3+json'
         }
         
-        logger.info(f"Using GitHub token: {os.getenv('GITHUB_TOKEN')[:10]}...")
+        max_retries = 3
+        retry_count = 0
         
-        response = requests.post(
-            'https://api.github.com/repos/NoCoMozi/MayDayMovement-clean/dispatches',
-            headers=headers,
-            json=payload
-        )
-        
-        logger.info(f"GitHub API response status code: {response.status_code}")
-        if response.status_code != 204:
-            logger.error(f"GitHub API response text: {response.text}")
-        
-        if response.status_code == 204:
-            update.message.reply_text("✅ Update received! The website will be updated shortly.")
-            logger.info("Successfully triggered GitHub workflow")
-        else:
-            update.message.reply_text(f"❌ Error: Could not process update. Status code: {response.status_code}")
-            logger.error(f"GitHub API error: {response.text}")
-            
+        while retry_count < max_retries:
+            try:
+                response = http.post(  # Using the session with retry strategy
+                    'https://api.github.com/repos/NoCoMozi/MayDayMovement-clean/dispatches',
+                    headers=headers,
+                    json=payload,
+                    timeout=10
+                )
+                
+                logger.info(f"GitHub API response status code: {response.status_code}")
+                
+                if response.status_code == 204:
+                    update.message.reply_text("✅ Update received! The website will be updated shortly.")
+                    logger.info("Successfully triggered GitHub workflow")
+                    return
+                else:
+                    logger.error(f"GitHub API error response: {response.text}")
+                    retry_count += 1
+                    if retry_count == max_retries:
+                        update.message.reply_text(f"❌ Error: Could not process update after {max_retries} attempts.")
+                    else:
+                        logger.info(f"Retrying... Attempt {retry_count + 1}/{max_retries}")
+                        time.sleep(1)  # Wait before retrying
+                        
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Request error: {str(e)}")
+                retry_count += 1
+                if retry_count == max_retries:
+                    update.message.reply_text("❌ Connection error. Please try again later.")
+                    break
+                time.sleep(1)  # Wait before retrying
+                
     except Exception as e:
         logger.error(f"Error handling message: {str(e)}")
         update.message.reply_text("❌ Sorry, there was an error processing your update. Please try again later.")
+
+def handle_photo(update: Update, context: CallbackContext) -> None:
+    """Handle photo messages."""
+    try:
+        update.message.reply_text("❌ Sorry, I can only process text messages at the moment. Please send your update as text.")
+    except Exception as e:
+        logger.error(f"Error handling photo: {str(e)}")
+        update.message.reply_text("❌ Error processing your message. Please try sending text only.")
+
+def handle_document(update: Update, context: CallbackContext) -> None:
+    """Handle document messages."""
+    try:
+        update.message.reply_text("❌ Sorry, I can only process text messages at the moment. Please send your update as text.")
+    except Exception as e:
+        logger.error(f"Error handling document: {str(e)}")
+        update.message.reply_text("❌ Error processing your message. Please try sending text only.")
+
+def handle_other(update: Update, context: CallbackContext) -> None:
+    """Handle other types of messages."""
+    try:
+        update.message.reply_text("❌ Sorry, I can only process text messages at the moment. Please send your update as text.")
+    except Exception as e:
+        logger.error(f"Error handling other message type: {str(e)}")
+        update.message.reply_text("❌ Error processing your message. Please try sending text only.")
 
 def error_handler(update: Update, context: CallbackContext) -> None:
     """Log Errors caused by Updates."""
@@ -80,27 +120,58 @@ def error_handler(update: Update, context: CallbackContext) -> None:
 
 def main() -> None:
     """Start the bot."""
-    # Create the Updater
-    token = os.getenv('TELEGRAM_BOT_TOKEN')
-    logger.info(f"Starting bot with token: {token[:10]}...")
-    
-    updater = Updater(token, use_context=True)
+    while True:  
+        try:
+            # Create the Updater
+            token = os.getenv('TELEGRAM_TOKEN')
+            if not token:
+                logger.error("TELEGRAM_TOKEN environment variable is not set!")
+                return
+                
+            logger.info("Starting bot...")
+            
+            # Configure the updater with more robust settings
+            request_kwargs = {
+                'read_timeout': 30,
+                'connect_timeout': 30,
+                'write_timeout': 30,
+                'pool_timeout': 30,
+            }
+            
+            updater = Updater(token, use_context=True, request_kwargs=request_kwargs)
 
-    # Get the dispatcher to register handlers
-    dp = updater.dispatcher
+            # Get the dispatcher to register handlers
+            dp = updater.dispatcher
 
-    # Add handlers
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
-    dp.add_error_handler(error_handler)
+            # Add handlers
+            dp.add_handler(CommandHandler("start", start))
+            dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+            dp.add_handler(MessageHandler(Filters.photo, handle_photo))
+            dp.add_handler(MessageHandler(Filters.document, handle_document))
+            dp.add_handler(MessageHandler(~Filters.text & ~Filters.photo & ~Filters.document, handle_other))
+            dp.add_error_handler(error_handler)
 
-    # Start the Bot
-    updater.start_polling()
-    logger.info("Bot is running! Send messages to your bot on Telegram.")
-    logger.info("Press Ctrl+C to stop.")
+            # Start the Bot with graceful shutdown
+            updater.start_polling(drop_pending_updates=True, timeout=30)
+            logger.info("Bot is running! Send messages to your bot on Telegram.")
+            logger.info("Press Ctrl+C to stop.")
 
-    # Run the bot until you press Ctrl-C
-    updater.idle()
+            # Run the bot until you press Ctrl-C or get a stop signal
+            updater.idle()
+            
+            # If we get here normally (through Ctrl+C), break the retry loop
+            break
+            
+        except Exception as e:
+            logger.error(f"Fatal error in main loop: {str(e)}")
+            logger.info("Waiting 10 seconds before restarting...")
+            time.sleep(10)  
+            continue
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user. Exiting...")
+    except Exception as e:
+        logger.error(f"Unrecoverable error: {str(e)}")
