@@ -19,9 +19,6 @@ jobs:
         with:
           python-version: '3.x'
           
-      - name: Install BeautifulSoup
-        run: pip install beautifulsoup4
-          
       - name: Add Update
         run: |
           # Create updates directory if it doesn't exist
@@ -35,51 +32,52 @@ jobs:
           python - <<EOF
           import os
           from datetime import datetime
-          from bs4 import BeautifulSoup
+          import re
           
           def add_update_to_html():
               with open('index.html', 'r', encoding='utf-8') as f:
                   content = f.read()
               
-              # Parse the HTML content
-              soup = BeautifulSoup(content, 'html.parser')
-              
               # Find the updates-list div
-              updates_list = soup.find('div', class_='updates-list')
-              if not updates_list:
+              updates_list_start = content.find('<div class="updates-list">')
+              if updates_list_start == -1:
                   print("Could not find updates-list div")
                   return
               
-              # Create the new update element
-              new_update = soup.new_tag('div', attrs={'class': 'update-item mb-4'})
-              card = soup.new_tag('div', attrs={'class': 'card'})
-              card_body = soup.new_tag('div', attrs={'class': 'card-body'})
+              # Find the end of the opening div tag
+              insert_point = content.find('>', updates_list_start) + 1
               
-              # Add the content
-              content_p = soup.new_tag('p', attrs={'class': 'card-text'})
-              content_p.string = "${{ github.event.client_payload.content }}"
+              # Create the new update HTML
+              new_update = f"""
+                <div class="update-item mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <p class="card-text">{os.environ.get('GITHUB_EVENT_CONTENT', "${{ github.event.client_payload.content }}")}</p>
+                            <p class="card-text"><small class="text-muted">Posted on {os.environ.get('GITHUB_EVENT_DATE', "${{ github.event.client_payload.date }}")}</small></p>
+                        </div>
+                    </div>
+                </div>"""
               
-              date_p = soup.new_tag('p', attrs={'class': 'card-text'})
-              date_small = soup.new_tag('small', attrs={'class': 'text-muted'})
-              date_small.string = f"Posted on ${{ github.event.client_payload.date }}"
-              date_p.append(date_small)
+              # Get all existing updates
+              updates_section = content[updates_list_start:]
+              end_updates = updates_section.find('</div>') + len('</div>')
+              updates_html = updates_section[:end_updates]
               
-              card_body.append(content_p)
-              card_body.append(date_p)
-              card.append(card_body)
-              new_update.append(card)
+              # Find all update items
+              update_items = re.findall(r'<div class="update-item mb-4">.*?</div>\s*</div>\s*</div>', updates_html, re.DOTALL)
               
-              # Insert the new update at the beginning
-              updates_list.insert(0, new_update)
+              # Keep only the 2 most recent updates (we'll add the new one to make 3)
+              kept_updates = update_items[:2] if update_items else []
               
-              # Keep only the 3 most recent updates
-              update_items = updates_list.find_all('div', class_='update-item', recursive=False)
-              for item in update_items[3:]:
-                  item.decompose()
+              # Create new content with limited updates
+              new_content = content[:insert_point] + new_update
+              for update in kept_updates:
+                  new_content += update
+              new_content += content[updates_list_start + end_updates:]
               
               # Write the updated content back to the file
               with open('index.html', 'w', encoding='utf-8') as f:
-                  f.write(str(soup.prettify()))
+                  f.write(new_content)
               
               print("Successfully added new update to index.html")
           
