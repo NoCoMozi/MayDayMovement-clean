@@ -2,7 +2,7 @@ import os
 import requests
 import json
 from datetime import datetime
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Update, CallbackContext
 import logging
 import time
 from requests.adapters import HTTPAdapter
@@ -27,61 +27,39 @@ http.mount("http://", adapter)
 def start(update, context):
     update.message.reply_text('Welcome to May Day Movement Bot! Send me updates to post to the website.')
 
-def post_to_github(content):
-    # GitHub repository details
-    owner = "NoCoMozi"
-    repo = "MayDayMovement-clean"
-    
-    # Get GitHub token from environment
-    github_token = os.getenv('GITHUB_TOKEN')
-    if not github_token:
-        raise ValueError("GitHub token not found in environment variables")
-    
-    # Prepare the dispatch event data
-    event_type = "telegram-update"
-    client_payload = {
-        "content": content,
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M")
-    }
-    
-    # GitHub API endpoint for repository dispatch
-    url = f"https://api.github.com/repos/{owner}/{repo}/dispatches"
-    
-    # Headers for authentication
-    headers = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": f"token {github_token}",
-        "Content-Type": "application/json"
-    }
-    
+def handle_message(update: Update, context: CallbackContext) -> None:
     try:
-        # Make the request with retry session
-        response = http.post(url, headers=headers, json={
-            "event_type": event_type,
-            "client_payload": client_payload
-        })
+        message_text = update.message.text
+        chat_id = update.message.chat_id
+        
+        # Create the payload for the workflow
+        payload = {
+            'event_type': 'telegram-update',
+            'client_payload': {
+                'content': message_text,
+                'date': datetime.now().strftime('%Y-%m-%d %H:%M')
+            }
+        }
+        
+        # Trigger the workflow via GitHub API
+        headers = {
+            'Authorization': f'token {os.getenv("GITHUB_TOKEN")}',
+            'Accept': 'application/vnd.github.v3+json'
+        }
+        response = requests.post(
+            'https://api.github.com/repos/NoCoMozi/MayDayMovement-clean/dispatches',
+            headers=headers,
+            json=payload
+        )
         
         if response.status_code == 204:
-            logger.info("Successfully posted update to GitHub")
-            return True
+            update.message.reply_text("✅ Update received! The website will be updated shortly.")
         else:
-            logger.error(f"Failed to post update. Status code: {response.status_code}")
-            logger.error(f"Response: {response.text}")
-            return False
+            update.message.reply_text(f"❌ Error: Could not process update. Status code: {response.status_code}")
+            
     except Exception as e:
-        logger.error(f"Error posting to GitHub: {str(e)}")
-        return False
-
-def handle_message(update, context):
-    content = update.message.text
-    try:
-        if post_to_github(content):
-            update.message.reply_text("✅ Update posted successfully! The website will be updated shortly.")
-        else:
-            update.message.reply_text("❌ Error posting update. Please try again later.")
-    except Exception as e:
-        logger.error(f"Error in handle_message: {str(e)}")
-        update.message.reply_text(f"❌ Error: {str(e)}")
+        logger.error(f"Error handling message: {str(e)}")
+        update.message.reply_text("❌ Sorry, there was an error processing your update. Please try again later.")
 
 def error_handler(update, context):
     """Log Errors caused by Updates."""
