@@ -21,53 +21,42 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-image: url('fist.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: white;
         }
 
-        .hero-section {
-            min-height: 100vh;
-            background-color: rgba(0, 0, 0, 0.6);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .container {
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
         }
 
-        .hero-content {
-            text-align: center;
-            max-width: 800px;
-            padding: 0 var(--spacing-sm);
-            animation: fadeIn 1s ease-out;
+        .card {
+            background-color: rgba(33, 37, 41, 0.9) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .card-body {
+            color: white;
         }
 
-        .hero-video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: -1;
-            filter: brightness(0.7);
+        .text-muted {
+            color: #adb5bd !important;
         }
 
-        .hero-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.4));
-            z-index: -1;
+        h1, h2, h3, h4, h5, h6 {
+            color: white;
         }
 
         .navbar {
-            background-color: transparent !important;
+            background-color: rgba(33, 37, 41, 0.9) !important;
             transition: background-color 0.3s ease;
             padding: 1.5rem 0;
         }
