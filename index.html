@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()">
+    <title>May Day Movement</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .hero-section {
+            min-height: 100vh;
+            background-color: rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: -1;
+        }
+        .navbar {
+            background-color: #dc3545 !important;
+        }
+        .nav-link.active {
+            border-bottom: 2px solid white;
+        }
+        section {
+            padding: 5rem 0;
+        }
+        .problem-card {
+            height: 100%;
+        }
+        .solution-item {
+            border-left: 4px solid #dc3545;
+            padding-left: 1rem;
+            margin-bottom: 2rem;
+        }
+        .get-involved-card {
+            background-color: #dc3545;
+            height: 100%;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+            padding: 1.5rem;
+        }
+        .get-involved-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
+            background-color: #e74555;
+        }
+        #involve {
+            background-color: #212529;
+        }
+        .get-involved-card h3 {
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        .get-involved-card p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#home">May Day Movement</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#updates">Updates</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#history">History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#problem">The Problem</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#solution">Our Solution</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#involve">Get Involved</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero-section text-white d-flex align-items-center">
+        <video class="hero-video" autoplay muted loop playsinline>
+            <source src="./people.mp4" type="video/mp4">
+        </video>
+        <div class="hero-overlay"></div>
+        <div class="container text-center">
+            <h1 class="display-3 mb-4">May 1st – The Day Workers Take Back Their Power</h1>
+            <p class="lead mb-5">International Workers' Day was born in the U.S. but erased from our culture. It's time to reclaim it.</p>
+            <a href="#involve" class="btn btn-danger btn-lg px-5">📢 Join the Movement</a>
+        </div>
+    </section>
+
+    <!-- Updates Section -->
+    <section id="updates" class="bg-light py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Latest Updates</h2>
+            <div class="row" id="updates-container">
+                <!-- Updates will be dynamically inserted here -->
+                <div class="col-md-12 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="card-title">Welcome to May Day Movement</h5>
+                                <small class="text-muted">Just now</small>
+                            </div>
+                            <p class="card-text">Our website is now live! Stay tuned for updates about May Day events and actions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- History Section -->
+    <section id="history" class="bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">History of International Workers' Day</h2>
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <p class="mb-4">The Haymarket Affair of 1886 sparked a global labor movement that would forever change workers' rights. As workers fought for an 8-hour workday, their struggle led to the establishment of May Day as International Workers' Day.</p>
+                    <p class="mb-4">Today, May Day is celebrated in over 80 countries worldwide as a public holiday - except in the United States, where its origins have been deliberately obscured.</p>
+                    <p>The erasure of May Day from American consciousness was a calculated effort to weaken labor solidarity and disconnect American workers from the global labor movement.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem Section -->
+    <section id="problem">
+        <div class="container">
+            <h2 class="text-center mb-5">The Problem</h2>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card problem-card">
+                        <div class="card-body">
+                            <h3 class="h5 mb-3">Undermined Labor Power</h3>
+                            <p class="card-text">Corporate and political forces have systematically weakened workers' collective bargaining power through anti-union legislation and propaganda.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card problem-card">
+                        <div class="card-body">
+                            <h3 class="h5 mb-3">Worker Division</h3>
+                            <p class="card-text">Workers are increasingly isolated and divided, making it harder to organize and fight for better conditions collectively.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card problem-card">
+                        <div class="card-body">
+                            <h3 class="h5 mb-3">Forgotten History</h3>
+                            <p class="card-text">The erasure of May Day from American consciousness has disconnected workers from their historical power and global solidarity.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card problem-card">
+                        <div class="card-body">
+                            <h3 class="h5 mb-3">Systemic Division</h3>
+                            <p class="card-text">The current system thrives by pitting workers against each other, preventing unified action for better conditions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution Section -->
+    <section id="solution" class="bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Our Solution</h2>
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="solution-item">
+                        <h3 class="h5 mb-3">Reclaim May Day</h3>
+                        <p>We're working to normalize May 1st as a day of worker solidarity and collective action in the United States.</p>
+                    </div>
+                    <div class="solution-item">
+                        <h3 class="h5 mb-3">National Action</h3>
+                        <p>Organizing a coordinated national "sick-out" and spending freeze to demonstrate worker power.</p>
+                    </div>
+                    <div class="solution-item">
+                        <h3 class="h5 mb-3">Decentralized Movement</h3>
+                        <p>Building a movement that leverages diverse talents and abilities across all sectors of the workforce.</p>
+                    </div>
+                    <div class="solution-item">
+                        <h3 class="h5 mb-3">United Message</h3>
+                        <p>Connecting local actions under a unified national message while respecting regional needs and differences.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Get Involved Section -->
+    <section id="involve" class="bg-dark text-white">
+        <div class="container">
+            <h2 class="text-center mb-5">Get Involved</h2>
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="card get-involved-card">
+                        <div class="card-body">
+                            <h3 class="h5 mb-3">Spread the Message</h3>
+                            <p>Share our message through social media, flyers, and word-of-mouth. Every conversation counts.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card get-involved-card">
+                        <div class="card-body">
+                            <h3 class="h5 mb-3">Stay Home on May 1st</h3>
+                            <p>Join the national sick-out and spending freeze to demonstrate worker solidarity.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card get-involved-card">
+                        <div class="card-body">
+                            <h3 class="h5 mb-3">Join Local Actions</h3>
+                            <p>Find or organize May Day events in your community. Connect with other workers.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card get-involved-card">
+                        <div class="card-body">
+                            <h3 class="h5 mb-3">Contact Your Union</h3>
+                            <p>Encourage your union to participate in May Day actions and support the movement.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Donation Section -->
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-8 text-center">
+                    <div class="p-4 bg-danger rounded-3 mb-5">
+                        <h3 class="mb-3">Support the Movement</h3>
+                        <p class="mb-4">Your donation helps us organize events, print materials, and build worker solidarity. Every dollar strengthens our collective voice.</p>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <button class="btn btn-light">$5</button>
+                            <button class="btn btn-light">$10</button>
+                            <button class="btn btn-light">$25</button>
+                            <button class="btn btn-light">$50</button>
+                            <button class="btn btn-light">Custom Amount</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Signup -->
+            <div class="row justify-content-center">
+                <div class="col-lg-6 text-center">
+                    <h3 class="mb-4">Stay Updated</h3>
+                    <div class="input-group mb-3">
+                        <input type="email" class="form-control" placeholder="Enter your email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" required autocomplete="email">
+                        <button class="btn btn-danger" type="button" onclick="if(!this.form.checkValidity()) return false;">📧 Sign Up</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Update active nav link on scroll
+        window.addEventListener('scroll', () => {
+            let current = '';
+            document.querySelectorAll('section').forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 60) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            document.querySelectorAll('.nav-link').forEach(li => {
+                li.classList.remove('active');
+                if (li.getAttribute('href').slice(1) === current) {
+                    li.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
