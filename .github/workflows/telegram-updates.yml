@@ -11,6 +11,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -35,36 +37,14 @@ jobs:
               with open('index.html', 'r', encoding='utf-8') as f:
                   content = f.read()
               
-              # Find the updates section
-              updates_start = content.find('<!-- Updates Section -->')
-              if updates_start == -1:
-                  # If section doesn't exist, create it before the closing body tag
-                  body_end = content.rfind('</body>')
-                  if body_end == -1:
-                      print("Could not find </body> tag")
-                      return
-                  
-                  # Create the updates section
-                  updates_section = '''
-                      <!-- Updates Section -->
-                      <section id="updates" class="py-5">
-                          <div class="container">
-                              <h2 class="text-center mb-5">Latest Updates</h2>
-                              <div class="updates-list">
-                              </div>
-                          </div>
-                      </section>
-                  '''
-                  
-                  content = content[:body_end] + updates_section + content[body_end:]
-              
               # Find the updates-list div
-              list_start = content.find('<div class="updates-list">')
-              if list_start == -1:
+              updates_list_start = content.find('<div class="updates-list">')
+              if updates_list_start == -1:
                   print("Could not find updates-list div")
                   return
               
-              list_start = content.find('>', list_start) + 1
+              # Find where to insert the new update (after the opening div)
+              insert_point = content.find('>', updates_list_start) + 1
               
               # Format the new update
               update_content = "${{ github.event.client_payload.content }}"
@@ -80,12 +60,14 @@ jobs:
                       </div>
                   </div>'''
               
-              # Insert the new update at the top of the list
-              content = content[:list_start] + new_update + content[list_start:]
+              # Insert the new update at the beginning of the list
+              updated_content = content[:insert_point] + new_update + content[insert_point:]
               
               # Write the updated content back to the file
               with open('index.html', 'w', encoding='utf-8') as f:
-                  f.write(content)
+                  f.write(updated_content)
+              
+              print("Successfully added new update to index.html")
           
           add_update_to_html()
           EOF
@@ -95,5 +77,5 @@ jobs:
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
           git add updates/ index.html
-          git commit -m "Add update from Telegram"
+          git commit -m "Add update from Telegram: ${{ github.event.client_payload.content }}"
           git push
