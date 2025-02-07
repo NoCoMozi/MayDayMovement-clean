@@ -1,0 +1,99 @@
+name: Process Telegram Updates
+
+on:
+  repository_dispatch:
+    types: [telegram-update]
+
+jobs:
+  update-website:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+          
+      - name: Add Update
+        run: |
+          # Create updates directory if it doesn't exist
+          mkdir -p updates
+          
+          # Create the update file with timestamp as name
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          echo "${{ github.event.client_payload.content }}" > "updates/${TIMESTAMP}.txt"
+          
+          # Update index.html with the new content
+          python - <<EOF
+          import os
+          from datetime import datetime
+          
+          def add_update_to_html():
+              with open('index.html', 'r', encoding='utf-8') as f:
+                  content = f.read()
+              
+              # Find the updates section
+              updates_start = content.find('<!-- Updates Section -->')
+              if updates_start == -1:
+                  # If section doesn't exist, create it before the closing body tag
+                  body_end = content.rfind('</body>')
+                  if body_end == -1:
+                      print("Could not find </body> tag")
+                      return
+                  
+                  # Create the updates section
+                  updates_section = '''
+                      <!-- Updates Section -->
+                      <section id="updates" class="py-5">
+                          <div class="container">
+                              <h2 class="text-center mb-5">Latest Updates</h2>
+                              <div class="updates-list">
+                              </div>
+                          </div>
+                      </section>
+                  '''
+                  
+                  content = content[:body_end] + updates_section + content[body_end:]
+              
+              # Find the updates-list div
+              list_start = content.find('<div class="updates-list">')
+              if list_start == -1:
+                  print("Could not find updates-list div")
+                  return
+              
+              list_start = content.find('>', list_start) + 1
+              
+              # Format the new update
+              update_content = "${{ github.event.client_payload.content }}"
+              update_date = "${{ github.event.client_payload.date }}"
+              
+              new_update = f'''
+                  <div class="update-item mb-4">
+                      <div class="card">
+                          <div class="card-body">
+                              <p class="card-text">{update_content}</p>
+                              <p class="card-text"><small class="text-muted">Posted on {update_date}</small></p>
+                          </div>
+                      </div>
+                  </div>'''
+              
+              # Insert the new update at the top of the list
+              content = content[:list_start] + new_update + content[list_start:]
+              
+              # Write the updated content back to the file
+              with open('index.html', 'w', encoding='utf-8') as f:
+                  f.write(content)
+          
+          add_update_to_html()
+          EOF
+          
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add updates/ index.html
+          git commit -m "Add update from Telegram"
+          git push
