@@ -46,8 +46,14 @@ def handle_message(update: Update, context: CallbackContext) -> None:
         logger.info("Sending request to GitHub API...")
         
         # Trigger the workflow via GitHub API with retries
+        github_token = os.getenv("GITHUB_TOKEN")
+        if not github_token:
+            logger.error("GITHUB_TOKEN environment variable is not set!")
+            update.message.reply_text("❌ Error: GitHub token not configured.")
+            return
+            
         headers = {
-            'Authorization': f'token {os.getenv("GITHUB_TOKEN")}',
+            'Authorization': f'Bearer {github_token}',
             'Accept': 'application/vnd.github.v3+json'
         }
         
@@ -56,7 +62,8 @@ def handle_message(update: Update, context: CallbackContext) -> None:
         
         while retry_count < max_retries:
             try:
-                response = http.post(  # Using the session with retry strategy
+                logger.info(f"Attempting to post to GitHub API (attempt {retry_count + 1}/{max_retries})")
+                response = http.post(
                     'https://api.github.com/repos/NoCoMozi/MayDayMovement-clean/dispatches',
                     headers=headers,
                     json=payload,
@@ -64,6 +71,8 @@ def handle_message(update: Update, context: CallbackContext) -> None:
                 )
                 
                 logger.info(f"GitHub API response status code: {response.status_code}")
+                logger.info(f"GitHub API response headers: {response.headers}")
+                logger.info(f"GitHub API response text: {response.text}")
                 
                 if response.status_code == 204:
                     update.message.reply_text("✅ Update received! The website will be updated shortly.")
@@ -73,10 +82,11 @@ def handle_message(update: Update, context: CallbackContext) -> None:
                     logger.error(f"GitHub API error response: {response.text}")
                     retry_count += 1
                     if retry_count == max_retries:
-                        update.message.reply_text(f"❌ Error: Could not process update after {max_retries} attempts.")
+                        error_msg = f"❌ Error: Could not process update. Status code: {response.status_code}, Response: {response.text}"
+                        update.message.reply_text(error_msg)
                     else:
                         logger.info(f"Retrying... Attempt {retry_count + 1}/{max_retries}")
-                        time.sleep(1)  # Wait before retrying
+                        time.sleep(1)
                         
             except requests.exceptions.RequestException as e:
                 logger.error(f"Request error: {str(e)}")
@@ -84,7 +94,7 @@ def handle_message(update: Update, context: CallbackContext) -> None:
                 if retry_count == max_retries:
                     update.message.reply_text("❌ Connection error. Please try again later.")
                     break
-                time.sleep(1)  # Wait before retrying
+                time.sleep(1)
                 
     except Exception as e:
         logger.error(f"Error handling message: {str(e)}")
@@ -120,7 +130,7 @@ def error_handler(update: Update, context: CallbackContext) -> None:
 
 def main() -> None:
     """Start the bot."""
-    while True:  
+    while True:  # Add infinite retry loop
         try:
             # Create the Updater
             token = os.getenv('TELEGRAM_TOKEN')
@@ -130,15 +140,8 @@ def main() -> None:
                 
             logger.info("Starting bot...")
             
-            # Configure the updater with more robust settings
-            request_kwargs = {
-                'read_timeout': 30,
-                'connect_timeout': 30,
-                'write_timeout': 30,
-                'pool_timeout': 30,
-            }
-            
-            updater = Updater(token, use_context=True, request_kwargs=request_kwargs)
+            # Create the updater with minimal settings
+            updater = Updater(token, use_context=True)
 
             # Get the dispatcher to register handlers
             dp = updater.dispatcher
@@ -165,7 +168,7 @@ def main() -> None:
         except Exception as e:
             logger.error(f"Fatal error in main loop: {str(e)}")
             logger.info("Waiting 10 seconds before restarting...")
-            time.sleep(10)  
+            time.sleep(10)  # Wait before retrying
             continue
 
 if __name__ == '__main__':
