@@ -33,6 +33,7 @@ jobs:
           import os
           import glob
           from datetime import datetime
+          import re
           
           def get_latest_updates():
               # Get all update files sorted by timestamp (newest first)
@@ -40,7 +41,7 @@ jobs:
               
               # Get content and dates for the 3 most recent updates
               updates = []
-              for file in update_files[:3]:
+              for file in update_files[:3]:  # Only take the 3 most recent updates
                   with open(file, 'r', encoding='utf-8') as f:
                       content = f.read().strip()
                   # Get date from filename (YYYYmmdd_HHMMSS)
@@ -52,70 +53,44 @@ jobs:
                       'date': date_str
                   })
               return updates
-          
-          def create_updates_section():
-              updates = get_latest_updates()
-              
-              # Create the updates section HTML
-              updates_html = '''
-    <section id="updates" class="bg-light py-5">
-        <div class="container">
-            <h2 class="text-center mb-5">Latest Updates</h2>
-            <div class="updates-list">'''
-              
-              # Add each update
-              for update in updates:
-                  updates_html += f'''
-                <div class="update-item mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <p class="card-text">{update['content']}</p>
-                            <p class="card-text"><small class="text-muted">Posted on {update['date']}</small></p>
-                        </div>
-                    </div>
-                </div>'''
-              
-              updates_html += '''
-            </div>
-        </div>
-    </section>'''
-              
-              return updates_html
-          
+
           def update_index_html():
-              # Read the current index.html
               with open('index.html', 'r', encoding='utf-8') as f:
                   content = f.read()
-              
-              # Find the updates section boundaries
-              start = content.find('<section id="updates"')
-              if start == -1:
-                  print("Could not find updates section")
-                  return
-              
-              end = content.find('</section>', start) + len('</section>')
-              
-              # Create the new updates section
-              new_updates = create_updates_section()
-              
-              # Replace the old section with the new one
-              new_content = content[:start] + new_updates + content[end:]
-              
-              # Write the updated content back to the file
+
+              # Get the latest updates
+              updates = get_latest_updates()
+
+              # Create the new updates HTML
+              updates_html = ''
+              for update in updates:
+                  updates_html += f'''
+                  <div class="update-item mb-4">
+                      <div class="card">
+                          <div class="card-body">
+                              <p class="card-text">{update['content']}</p>
+                              <p class="card-text"><small class="text-muted">Posted on {update['date']}</small></p>
+                          </div>
+                      </div>
+                  </div>'''
+
+              # Find the updates section and replace its content
+              pattern = r'(<div class="updates-list">).*?(</div>\s*<!-- Initial welcome message -->)'
+              replacement = r'\1' + updates_html + r'\2'
+              new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+
+              # Write the updated content back to index.html
               with open('index.html', 'w', encoding='utf-8') as f:
                   f.write(new_content)
-              
-              print("Successfully updated index.html")
-          
+
           update_index_html()
           EOF
-          
-      - name: Commit and push changes
-        run: |
-          git config --global user.name 'GitHub Action'
-          git config --global user.email 'action@github.com'
-          git add updates/ index.html
-          git commit -m "Add update from Telegram: ${{ github.event.client_payload.content }}"
+
+          # Stage the changes
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add index.html updates/
+          git commit -m "Update website with new Telegram message"
           git push
           
       - name: Trigger GitHub Pages rebuild
