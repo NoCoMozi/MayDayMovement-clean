@@ -36,6 +36,11 @@
         }
         .navbar {
             background-color: #dc3545 !important;
+            transition: background-color 0.3s ease;
+        }
+        .navbar.scrolled {
+            background-color: #212529 !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .nav-link.active {
             border-bottom: 2px solid white;
@@ -336,12 +341,20 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Add active class to nav items on scroll
         document.addEventListener('DOMContentLoaded', function() {
             const sections = document.querySelectorAll('section');
             const navLinks = document.querySelectorAll('.nav-link');
+            const navbar = document.querySelector('.navbar');
 
             window.addEventListener('scroll', () => {
+                // Handle navbar color change
+                if (window.scrollY > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+
+                // Handle active section highlighting
                 let current = '';
                 sections.forEach(section => {
                     const sectionTop = section.offsetTop;
