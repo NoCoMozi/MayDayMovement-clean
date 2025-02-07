@@ -19,6 +19,9 @@ jobs:
         with:
           python-version: '3.x'
           
+      - name: Install BeautifulSoup
+        run: pip install beautifulsoup4
+          
       - name: Add Update
         run: |
           # Create updates directory if it doesn't exist
@@ -70,21 +73,18 @@ jobs:
               updates_list.insert(0, new_update)
               
               # Keep only the 3 most recent updates
-              update_items = updates_list.find_all('div', class_='update-item')
+              update_items = updates_list.find_all('div', class_='update-item', recursive=False)
               for item in update_items[3:]:
                   item.decompose()
               
               # Write the updated content back to the file
               with open('index.html', 'w', encoding='utf-8') as f:
-                  f.write(str(soup))
+                  f.write(str(soup.prettify()))
               
               print("Successfully added new update to index.html")
           
           add_update_to_html()
           EOF
-          
-      - name: Install BeautifulSoup
-        run: pip install beautifulsoup4
           
       - name: Commit and push changes
         run: |
