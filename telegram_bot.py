@@ -32,6 +32,7 @@ def handle_message(update: Update, context: CallbackContext) -> None:
     try:
         message_text = update.message.text
         chat_id = update.message.chat_id
+        logger.info(f"Received message: {message_text}")
         
         # Create the payload for the workflow
         payload = {
@@ -42,19 +43,29 @@ def handle_message(update: Update, context: CallbackContext) -> None:
             }
         }
         
+        logger.info("Sending request to GitHub API...")
+        
         # Trigger the workflow via GitHub API
         headers = {
             'Authorization': f'token {os.getenv("GITHUB_TOKEN")}',
             'Accept': 'application/vnd.github.v3+json'
         }
+        
+        logger.info(f"Using GitHub token: {os.getenv('GITHUB_TOKEN')[:10]}...")
+        
         response = requests.post(
             'https://api.github.com/repos/NoCoMozi/MayDayMovement-clean/dispatches',
             headers=headers,
             json=payload
         )
         
+        logger.info(f"GitHub API response status code: {response.status_code}")
+        if response.status_code != 204:
+            logger.error(f"GitHub API response text: {response.text}")
+        
         if response.status_code == 204:
             update.message.reply_text("✅ Update received! The website will be updated shortly.")
+            logger.info("Successfully triggered GitHub workflow")
         else:
             update.message.reply_text(f"❌ Error: Could not process update. Status code: {response.status_code}")
             logger.error(f"GitHub API error: {response.text}")
@@ -70,7 +81,10 @@ def error_handler(update: Update, context: CallbackContext) -> None:
 def main() -> None:
     """Start the bot."""
     # Create the Updater
-    updater = Updater(os.getenv('TELEGRAM_BOT_TOKEN'), use_context=True)
+    token = os.getenv('TELEGRAM_BOT_TOKEN')
+    logger.info(f"Starting bot with token: {token[:10]}...")
+    
+    updater = Updater(token, use_context=True)
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
