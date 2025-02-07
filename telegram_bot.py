@@ -53,8 +53,9 @@ def handle_message(update: Update, context: CallbackContext) -> None:
             return
             
         headers = {
-            'Authorization': f'Bearer {github_token}',
-            'Accept': 'application/vnd.github.v3+json'
+            'Authorization': f'token {github_token}',
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
         }
         
         max_retries = 3
