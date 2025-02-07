@@ -32,45 +32,59 @@ jobs:
           python - <<EOF
           import os
           from datetime import datetime
+          from bs4 import BeautifulSoup
           
           def add_update_to_html():
               with open('index.html', 'r', encoding='utf-8') as f:
                   content = f.read()
               
+              # Parse the HTML content
+              soup = BeautifulSoup(content, 'html.parser')
+              
               # Find the updates-list div
-              updates_list_start = content.find('<div class="updates-list">')
-              if updates_list_start == -1:
+              updates_list = soup.find('div', class_='updates-list')
+              if not updates_list:
                   print("Could not find updates-list div")
                   return
               
-              # Find where to insert the new update (after the opening div)
-              insert_point = content.find('>', updates_list_start) + 1
+              # Create the new update element
+              new_update = soup.new_tag('div', attrs={'class': 'update-item mb-4'})
+              card = soup.new_tag('div', attrs={'class': 'card'})
+              card_body = soup.new_tag('div', attrs={'class': 'card-body'})
               
-              # Format the new update
-              update_content = "${{ github.event.client_payload.content }}"
-              update_date = "${{ github.event.client_payload.date }}"
+              # Add the content
+              content_p = soup.new_tag('p', attrs={'class': 'card-text'})
+              content_p.string = "${{ github.event.client_payload.content }}"
               
-              new_update = f'''
-                  <div class="update-item mb-4">
-                      <div class="card">
-                          <div class="card-body">
-                              <p class="card-text">{update_content}</p>
-                              <p class="card-text"><small class="text-muted">Posted on {update_date}</small></p>
-                          </div>
-                      </div>
-                  </div>'''
+              date_p = soup.new_tag('p', attrs={'class': 'card-text'})
+              date_small = soup.new_tag('small', attrs={'class': 'text-muted'})
+              date_small.string = f"Posted on ${{ github.event.client_payload.date }}"
+              date_p.append(date_small)
               
-              # Insert the new update at the beginning of the list
-              updated_content = content[:insert_point] + new_update + content[insert_point:]
+              card_body.append(content_p)
+              card_body.append(date_p)
+              card.append(card_body)
+              new_update.append(card)
+              
+              # Insert the new update at the beginning
+              updates_list.insert(0, new_update)
+              
+              # Keep only the 3 most recent updates
+              update_items = updates_list.find_all('div', class_='update-item')
+              for item in update_items[3:]:
+                  item.decompose()
               
               # Write the updated content back to the file
               with open('index.html', 'w', encoding='utf-8') as f:
-                  f.write(updated_content)
+                  f.write(str(soup))
               
               print("Successfully added new update to index.html")
           
           add_update_to_html()
           EOF
+          
+      - name: Install BeautifulSoup
+        run: pip install beautifulsoup4
           
       - name: Commit and push changes
         run: |
