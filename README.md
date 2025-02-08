@@ -1,4 +1,4 @@
-# May Day Movement Website
+# Operation May Day Website
 
 A website dedicated to reclaiming May Day (International Workers' Day) in the United States. This project aims to raise awareness about the historical significance of May Day and organize collective action.
 
